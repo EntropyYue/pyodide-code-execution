@@ -9,7 +9,7 @@ def extract_replace_block(source_path):
 
     lines = []
     in_block = False
-    with open(source_path, "r", encoding="utf-8") as f:
+    with open(source_path, encoding="utf-8") as f:
         for line in f:
             if not in_block:
                 if "[replace begin]" in line:
@@ -34,7 +34,8 @@ def main():
         print(f"Target file does not exist: {target_file}")
         sys.exit(1)
 
-    text = open("src/main.py", "r", encoding="utf-8").read()
+    with open("src/main.py", encoding="utf-8") as f:
+        text = f.read()
 
     pattern = re.compile(r"\{\{\s*(.+?)\s*\}\}")
 

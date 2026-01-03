@@ -6,12 +6,11 @@ funding_url: https://github.com/EntropyYue/pyodide-code-execution
 version: 0.0.2
 """
 
+import uuid
 from collections.abc import Callable
 from typing import Any, TypedDict
-import uuid
 
 from fastapi import Request
-
 from open_webui.config import WEBUI_URL
 from open_webui.models.users import UserModel
 from open_webui.utils.files import get_image_url_from_base64
@@ -80,16 +79,17 @@ class Tools:
         stdout_lines = result.get("stdout").splitlines(keepends=True)
 
         for i, line in enumerate(stdout_lines):
-            if line.startswith("data:image/png;base64,"):
-                if image_url := get_image_url_from_base64(
+            if line.startswith("data:image/png;base64,") and (
+                image_url := get_image_url_from_base64(
                     request=__request__,
                     base64_image_string=line,
                     metadata=__metadata__,
                     user=UserModel(**__user__) if __user__ else None,
-                ):
-                    image_url = f"{WEBUI_URL}{image_url}"
-                    stdout_lines[i] = f"![Output Image]({image_url})"
-                    execution_tracker.add_file("Output Image", image_url)
+                )
+            ):
+                image_url = f"{WEBUI_URL}{image_url}"
+                stdout_lines[i] = f"![Output Image]({image_url})"
+                execution_tracker.add_file("Output Image", image_url)
 
         stdout = "".join(stdout_lines)
 
