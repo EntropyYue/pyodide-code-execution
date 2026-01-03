@@ -1,0 +1,16 @@
+[project]
+name = "pyodide-code-execution"
+version = "0.0.1"
+description = "An open-webui tools, Use Pyodide to execute the provided Python code and return the output."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.10",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
