@@ -87,7 +87,9 @@ class Tools:
                     metadata=__metadata__,
                     user=UserModel(**__user__) if __user__ else None,
                 ):
-                    stdout_lines[i] = f"![Output Image]({WEBUI_URL}{image_url})"
+                    image_url = f"{WEBUI_URL}{image_url}"
+                    stdout_lines[i] = f"![Output Image]({image_url})"
+                    execution_tracker.add_file("Output Image", image_url)
 
         stdout = "".join(stdout_lines)
 
