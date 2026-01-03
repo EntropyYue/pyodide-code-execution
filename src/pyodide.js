@@ -12,7 +12,7 @@ async () => {
         catch (err) {
             status = `Error loading Pyodide: ${err}`;
             return {
-                stdout: stdout.trim(), stderr: stderr.trim(), status: status
+                stdout: stdout, stderr: stderr, status: status
             };
         }
 
@@ -63,8 +63,15 @@ async () => {
         status = `Error running Python code: ${err}`;
     }
 
+    if (stdout.length > 0 && stdout.endsWith('\n')) {
+        stdout = stdout.slice(0, -1);
+    }
+    if (stderr.length > 0 && stderr.endsWith('\n')) {
+        stderr = stderr.slice(0, -1);
+    }
+
     return {
-        "stdout": stdout.trim(), "stderr": stderr.trim(), "status": status
+        "stdout": stdout, "stderr": stderr, "status": status
     };
     // [replace end]
 }
