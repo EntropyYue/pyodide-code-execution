@@ -12,7 +12,7 @@ async () => {
         catch (err) {
             status = `Error loading Pyodide: ${err}`;
             return {
-                stdout: stdout.trim(), stderr: stderr.trim(), status: status
+                stdout: stdout, stderr: stderr, status: status
             };
         }
 
@@ -36,7 +36,7 @@ async () => {
         return pyodide;
     }
 
-    let code = `[[code]]`;
+    let code = String.raw`[[code]]`;
 
     let packages = [
         /\bimport\s+requests\b|\bfrom\s+requests\b/.test(code) ? 'requests' : null,
@@ -56,6 +56,12 @@ async () => {
 
     try {
         const pyodide = await getPyodide(packages);
+
+        if (code.includes('matplotlib')) {
+            // Override plt.show() to return base64 image
+            await pyodide.runPythonAsync(String.raw`[[matplotlib_overload]]`);
+        }
+
         await pyodide.runPythonAsync(code);
         status = "OK";
     }
@@ -63,8 +69,15 @@ async () => {
         status = `Error running Python code: ${err}`;
     }
 
+    if (stdout.length > 0 && stdout.endsWith('\n')) {
+        stdout = stdout.slice(0, -1);
+    }
+    if (stderr.length > 0 && stderr.endsWith('\n')) {
+        stderr = stderr.slice(0, -1);
+    }
+
     return {
-        "stdout": stdout.trim(), "stderr": stderr.trim(), "status": status
+        "stdout": stdout, "stderr": stderr, "status": status
     };
     // [replace end]
 }
