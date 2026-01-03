@@ -36,7 +36,7 @@ async () => {
         return pyodide;
     }
 
-    let code = `[[code]]`;
+    let code = String.raw`[[code]]`;
 
     let packages = [
         /\bimport\s+requests\b|\bfrom\s+requests\b/.test(code) ? 'requests' : null,
