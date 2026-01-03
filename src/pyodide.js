@@ -56,6 +56,12 @@ async () => {
 
     try {
         const pyodide = await getPyodide(packages);
+
+        if (code.includes('matplotlib')) {
+            // Override plt.show() to return base64 image
+            await pyodide.runPythonAsync(String.raw`[[matplotlib_overload]]`);
+        }
+
         await pyodide.runPythonAsync(code);
         status = "OK";
     }

@@ -8,6 +8,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "open-webui>=0.6.41",
     "ruff>=0.14.10",
 ]
 
