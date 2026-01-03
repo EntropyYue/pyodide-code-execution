@@ -35,7 +35,7 @@ JS_CODE = r"""
 
 class Tools:
     class Valves(BaseModel):
-        STATUS: bool = Field(default=True, description="")
+        STATUS: bool = Field(default=True, description="Enable status updates.")
 
     def __init__(self) -> None:
         self.valves = self.Valves()
