@@ -1,0 +1,45 @@
+name: Python CI
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - master
+jobs:
+  release:
+    name: Release
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'v')
+    runs-on: ubuntu-latest
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup ruff
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: "--version"
+
+    - name: Run build
+      run: make build-format
+
+    - name: Get PR title
+      id: get_pr_title
+      run: echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+
+    - name: Create Tag
+      run: |
+        TAG_NAME=${{ steps.get_pr_title.outputs.pr_title }}
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git tag $TAG_NAME
+        git push origin $TAG_NAME
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_pr_title.outputs.pr_title }}
+        files: ./dist/plugin.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

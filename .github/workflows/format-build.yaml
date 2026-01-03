@@ -1,0 +1,49 @@
+name: Python CI
+on:   
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+      - dev
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup ruff
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: "--version"
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Lint and format
+      run: make lint-format
+
+    - name: uv Sync
+      run: uv sync
+
+    - name: Check for changes
+      run: git diff --exit-code
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup ruff
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: "--version"
+
+    - name: Run build
+      run: make build-format
