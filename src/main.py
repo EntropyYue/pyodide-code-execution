@@ -3,7 +3,7 @@ title: Pyodide Code Execution
 author: EntropyYue
 author_url: https://github.com/EntropyYue/pyodide-code-execution
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.0.1
+version: 0.0.2
 """
 
 from collections.abc import Callable
