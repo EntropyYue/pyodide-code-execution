@@ -107,38 +107,8 @@ class Tools:
         }
 
 
-class EventEmitter:
-    """
-    Helper wrapper for OpenWebUI event emissions.
-    """
-
-    def __init__(
-        self,
-        valves: Tools.Valves,
-        event_emitter: Callable[[dict], Any] | None = None,
-    ):
-        self.event_emitter = event_emitter
-        self.valves = valves
-
-    async def _emit(self, typ, data, twice):
-        if not self.event_emitter:
-            return None
-        result = await self.event_emitter(
-            {
-                "type": typ,
-                "data": data,
-            }
-        )
-        return result
-
-    async def code_execution(self, code_execution_tracker):
-        await self._emit(
-            "citation", code_execution_tracker._citation_data(), twice=True
-        )
-
-
 class CodeExecutionTracker:
-    def __init__(self, name, code, language):
+    def __init__(self, name: str, code: str, language: str):
         self._uuid = str(uuid.uuid4())
         self.name = name
         self.code = code
@@ -161,8 +131,8 @@ class CodeExecutionTracker:
             }
         )
 
-    def _citation_data(self):
-        data = {
+    def citation_data(self):
+        data: dict[str, Any] = {
             "type": "code_execution",
             "id": self._uuid,
             "name": self.name,
@@ -172,3 +142,31 @@ class CodeExecutionTracker:
         if "output" in self._result or "error" in self._result:
             data["result"] = self._result
         return data
+
+
+class EventEmitter:
+    """
+    Helper wrapper for OpenWebUI event emissions.
+    """
+
+    def __init__(
+        self,
+        valves: Tools.Valves,
+        event_emitter: Callable[[dict], Any] | None = None,
+    ):
+        self.event_emitter = event_emitter
+        self.valves = valves
+
+    async def _emit(self, typ: str, data: dict[str, Any]):
+        if not self.event_emitter:
+            return None
+        result = await self.event_emitter(
+            {
+                "type": typ,
+                "data": data,
+            }
+        )
+        return result
+
+    async def code_execution(self, code_execution_tracker: CodeExecutionTracker):
+        await self._emit("citation", code_execution_tracker.citation_data())
