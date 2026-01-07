@@ -65,15 +65,16 @@ class Tools:
 
         await emitter.code_execution(execution_tracker)
 
+        code: str = JS_CODE.replace(
+            "[[code]]",
+            python_code,
+        ).replace(
+            """[[matplotlib_override]]""",
+            OVERRIDE_SHOW,
+        )
+
         result: Result = await __event_call__(
-            {
-                "type": "execute",
-                "data": {
-                    "code": JS_CODE.replace("[[code]]", python_code).replace(
-                        """[[matplotlib_override]]""", OVERRIDE_SHOW
-                    ),
-                },
-            }
+            {"type": "execute", "data": {"code": code}}
         )
 
         stdout_lines = result.get("stdout").splitlines(keepends=True)
