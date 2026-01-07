@@ -23,7 +23,7 @@ class Result(TypedDict):
     status: str
 
 
-OVERLOAD_SHOW = r"""
+OVERRIDE_SHOW = r"""
 {{src/show.py}}
 """.strip()
 
@@ -70,7 +70,7 @@ class Tools:
                 "type": "execute",
                 "data": {
                     "code": JS_CODE.replace("[[code]]", python_code).replace(
-                        """[[matplotlib_overload]]""", OVERLOAD_SHOW
+                        """[[matplotlib_override]]""", OVERRIDE_SHOW
                     ),
                 },
             }
