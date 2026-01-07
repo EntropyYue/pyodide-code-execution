@@ -59,7 +59,7 @@ async () => {
 
         if (code.includes('matplotlib')) {
             // Override plt.show() to return base64 image
-            await pyodide.runPythonAsync(String.raw`[[matplotlib_override]]`);
+            await pyodide.runPythonAsync(String.raw`[[matplotlib]]`);
         }
 
         await pyodide.runPythonAsync(code);

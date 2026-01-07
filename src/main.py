@@ -69,7 +69,7 @@ class Tools:
             "[[code]]",
             python_code,
         ).replace(
-            """[[matplotlib_override]]""",
+            """[[matplotlib]]""",
             OVERRIDE_SHOW,
         )
 
