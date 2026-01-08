@@ -1,6 +1,6 @@
 [project]
 name = "pyodide-code-execution"
-version = "0.0.2"
+version = "0.0.3"
 description = "An open-webui tools, Use Pyodide to execute the provided Python code and return the output."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,3 +16,17 @@ dev = [
 [[tool.uv.index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
+
+[tool.ruff.lint]
+select = [
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
