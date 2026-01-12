@@ -3,7 +3,7 @@ title: Pyodide Code Execution
 author: EntropyYue
 author_url: https://github.com/EntropyYue/pyodide-code-execution
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.0.3
+version: 0.1.0
 """
 
 import uuid
@@ -18,18 +18,9 @@ from pydantic import BaseModel, Field
 
 
 class Result(TypedDict):
-    stdout: str
-    stderr: str
-    status: str
-
-
-OVERRIDE_SHOW = r"""
-{{src/show.py}}
-""".strip()
-
-JS_CODE = r"""
-{{src/pyodide.js}}
-""".strip()
+    stdout: str | None
+    stderr: str | None
+    result: str | None
 
 
 class Tools:
@@ -47,7 +38,7 @@ class Tools:
         __metadata__: dict | None = None,
         __event_emitter__: Callable[[dict], Any] | None = None,
         __event_call__: Callable[[dict], Any] | None = None,
-    ) -> dict[str, str]:
+    ) -> dict[str, str | None]:
         """
         Use Pyodide to execute the provided Python code and return the output.
         When using Matplotlib, use the show() function.
@@ -65,64 +56,70 @@ class Tools:
 
         await emitter.code_execution(execution_tracker)
 
-        code: str = JS_CODE.replace(
-            "[[code]]",
-            python_code,
-        ).replace(
-            """[[matplotlib]]""",
-            OVERRIDE_SHOW,
-        )
-
         result: Result = await __event_call__(
-            {"type": "execute", "data": {"code": code}}
+            {
+                "type": "execute:python",
+                "data": {
+                    "id": str(uuid.uuid4()),
+                    "code": python_code,
+                    "session_id": __metadata__.get("session_id")
+                    if __metadata__
+                    else None,
+                },
+            }
         )
 
-        stdout_lines = result.get("stdout").splitlines(keepends=True)
+        if stdout := result.get("stdout"):
+            stdout_lines = stdout.splitlines(keepends=True)
 
-        for i, line in enumerate(stdout_lines):
-            if line.startswith("data:image/png;base64,") and (
-                image_url := get_image_url_from_base64(
-                    request=__request__,
-                    base64_image_string=line,
-                    metadata=__metadata__,
-                    user=UserModel(**__user__) if __user__ else None,
-                )
-            ):
-                image_url = f"{WEBUI_URL}{image_url}"
-                stdout_lines[i] = f"![Output Image]({image_url})"
-                execution_tracker.add_file("Output Image", image_url)
+            for i, line in enumerate(stdout_lines):
+                if line.startswith("data:image/png;base64,") and (
+                    image_url := get_image_url_from_base64(
+                        request=__request__,
+                        base64_image_string=line,
+                        metadata=__metadata__,
+                        user=UserModel(**__user__) if __user__ else None,
+                    )
+                ):
+                    image_url = f"{WEBUI_URL}{image_url}"
+                    stdout_lines[i] = f"![Output Image]({image_url})"
+                    execution_tracker.add_file("Output Image", image_url)
 
-        stdout = "".join(stdout_lines)
-
-        if result.get("status") == "OK":
-            execution_tracker.set_output(stdout or "None")
-        if result.get("status") != "OK":
-            execution_tracker.set_error(result.get("status", result.get("stderr")))
+            stdout = "".join(stdout_lines)
+        execution_tracker.set_output(stdout or result.get("result") or "None")
+        if result.get("stderr"):
+            execution_tracker.set_error(result.get("stderr") or "Error")
 
         await emitter.code_execution(execution_tracker)
 
         return {
             "stdout": stdout,
             "stderr": result.get("stderr"),
-            "status": result.get("status"),
+            "result": result.get("result"),
         }
 
 
+class TrackerResult(TypedDict, total=False):
+    error: str
+    output: str
+    files: list[dict[str, str]]
+
+
 class CodeExecutionTracker:
-    def __init__(self, name: str, code: str, language: str):
+    def __init__(self, name: str, code: str, language: str) -> None:
         self._uuid = str(uuid.uuid4())
         self.name = name
         self.code = code
         self.language = language
-        self._result = {}
+        self._result: TrackerResult = {}
 
-    def set_error(self, error):
+    def set_error(self, error: str):
         self._result["error"] = error
 
-    def set_output(self, output):
+    def set_output(self, output: str):
         self._result["output"] = output
 
-    def add_file(self, name, url):
+    def add_file(self, name: str, url: str):
         if "files" not in self._result:
             self._result["files"] = []
         self._result["files"].append(
@@ -133,7 +130,7 @@ class CodeExecutionTracker:
         )
 
     def citation_data(self):
-        data: dict[str, Any] = {
+        data: dict[str, str | TrackerResult] = {
             "type": "code_execution",
             "id": self._uuid,
             "name": self.name,
@@ -146,19 +143,15 @@ class CodeExecutionTracker:
 
 
 class EventEmitter:
-    """
-    Helper wrapper for OpenWebUI event emissions.
-    """
-
     def __init__(
         self,
         valves: Tools.Valves,
         event_emitter: Callable[[dict], Any] | None = None,
-    ):
+    ) -> None:
         self.event_emitter = event_emitter
         self.valves = valves
 
-    async def _emit(self, typ: str, data: dict[str, Any]):
+    async def _emit(self, typ: str, data: dict[str, Any]) -> Any:
         if not self.event_emitter:
             return None
         result = await self.event_emitter(
@@ -169,5 +162,7 @@ class EventEmitter:
         )
         return result
 
-    async def code_execution(self, code_execution_tracker: CodeExecutionTracker):
+    async def code_execution(
+        self, code_execution_tracker: CodeExecutionTracker
+    ) -> None:
         await self._emit("citation", code_execution_tracker.citation_data())
