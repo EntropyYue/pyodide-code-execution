@@ -21,8 +21,8 @@ jobs:
       with:
         args: "--version"
 
-    - name: Run build
-      run: make build-format
+    - name: Create plugin.py
+      run: mkdir -p dist && cp src/main.py dist/plugin.py
 
     - name: Get PR title
       id: get_pr_title

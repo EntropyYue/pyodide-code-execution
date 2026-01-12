@@ -18,18 +18,9 @@ from pydantic import BaseModel, Field
 
 
 class Result(TypedDict):
-    stdout: str
-    stderr: str
-    status: str
-
-
-OVERRIDE_SHOW = r"""
-{{src/show.py}}
-""".strip()
-
-JS_CODE = r"""
-{{src/pyodide.js}}
-""".strip()
+    stdout: str | None
+    stderr: str | None
+    result: str | None
 
 
 class Tools:
@@ -47,7 +38,7 @@ class Tools:
         __metadata__: dict | None = None,
         __event_emitter__: Callable[[dict], Any] | None = None,
         __event_call__: Callable[[dict], Any] | None = None,
-    ) -> dict[str, str]:
+    ) -> dict[str, str | None]:
         """
         Use Pyodide to execute the provided Python code and return the output.
         When using Matplotlib, use the show() function.
@@ -65,46 +56,46 @@ class Tools:
 
         await emitter.code_execution(execution_tracker)
 
-        code: str = JS_CODE.replace(
-            "[[code]]",
-            python_code,
-        ).replace(
-            """[[matplotlib]]""",
-            OVERRIDE_SHOW,
-        )
-
         result: Result = await __event_call__(
-            {"type": "execute", "data": {"code": code}}
+            {
+                "type": "execute:python",
+                "data": {
+                    "id": str(uuid.uuid4()),
+                    "code": python_code,
+                    "session_id": __metadata__.get("session_id")
+                    if __metadata__
+                    else None,
+                },
+            }
         )
 
-        stdout_lines = result.get("stdout").splitlines(keepends=True)
+        if stdout := result.get("stdout"):
+            stdout_lines = stdout.splitlines(keepends=True)
 
-        for i, line in enumerate(stdout_lines):
-            if line.startswith("data:image/png;base64,") and (
-                image_url := get_image_url_from_base64(
-                    request=__request__,
-                    base64_image_string=line,
-                    metadata=__metadata__,
-                    user=UserModel(**__user__) if __user__ else None,
-                )
-            ):
-                image_url = f"{WEBUI_URL}{image_url}"
-                stdout_lines[i] = f"![Output Image]({image_url})"
-                execution_tracker.add_file("Output Image", image_url)
+            for i, line in enumerate(stdout_lines):
+                if line.startswith("data:image/png;base64,") and (
+                    image_url := get_image_url_from_base64(
+                        request=__request__,
+                        base64_image_string=line,
+                        metadata=__metadata__,
+                        user=UserModel(**__user__) if __user__ else None,
+                    )
+                ):
+                    image_url = f"{WEBUI_URL}{image_url}"
+                    stdout_lines[i] = f"![Output Image]({image_url})"
+                    execution_tracker.add_file("Output Image", image_url)
 
-        stdout = "".join(stdout_lines)
-
-        if result.get("status") == "OK":
-            execution_tracker.set_output(stdout or "None")
-        if result.get("status") != "OK":
-            execution_tracker.set_error(result.get("status", result.get("stderr")))
+            stdout = "".join(stdout_lines)
+        execution_tracker.set_output(stdout or result.get("result") or "None")
+        if result.get("stderr"):
+            execution_tracker.set_error(result.get("stderr") or "Error")
 
         await emitter.code_execution(execution_tracker)
 
         return {
             "stdout": stdout,
             "stderr": result.get("stderr"),
-            "status": result.get("status"),
+            "result": result.get("result"),
         }
 
 
