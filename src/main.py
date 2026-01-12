@@ -3,7 +3,7 @@ title: Pyodide Code Execution
 author: EntropyYue
 author_url: https://github.com/EntropyYue/pyodide-code-execution
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.0.3
+version: 0.1.0
 """
 
 import uuid
