@@ -86,9 +86,16 @@ class Tools:
                     execution_tracker.add_file("Output Image", image_url)
 
             stdout = "".join(stdout_lines)
-        execution_tracker.set_output(stdout or result.get("result") or "None")
+
+        execution_tracker.set_output("None")
         if result.get("stderr"):
             execution_tracker.set_error(result.get("stderr") or "Error")
+
+        if not (result.get("stdout") or result.get("result")):
+            execution_tracker.set_output("")
+
+        if result.get("stdout") or result.get("result"):
+            execution_tracker.set_output(stdout or result.get("result") or "")
 
         await emitter.code_execution(execution_tracker)
 
