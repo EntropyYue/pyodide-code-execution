@@ -70,7 +70,7 @@ class Tools:
         )
 
         if stdout := result.get("stdout"):
-            stdout_lines = stdout.splitlines(keepends=True)
+            stdout_lines = stdout.split("\n")
 
             for i, line in enumerate(stdout_lines):
                 if line.startswith("data:image/png;base64,") and (
@@ -85,7 +85,7 @@ class Tools:
                     stdout_lines[i] = f"![Output Image]({image_url})"
                     execution_tracker.add_file("Output Image", image_url)
 
-            stdout = "".join(stdout_lines)
+            stdout = "\n".join(stdout_lines)
 
         execution_tracker.set_output("None")
         if result.get("stderr"):
