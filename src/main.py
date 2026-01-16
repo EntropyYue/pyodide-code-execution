@@ -48,7 +48,10 @@ class Tools:
         :return: The output from the executed code, when `status` is not "OK", report the `status` field first.
         """
         if not __event_call__:
-            raise
+            return {
+                "error": "Event call not available. WebSocket connection required for pyodide execution."
+            }
+
         emitter = EventEmitter(self.valves, __event_emitter__)
         execution_tracker = CodeExecutionTracker(
             name="Python Code Execution", code=python_code, language="python"
