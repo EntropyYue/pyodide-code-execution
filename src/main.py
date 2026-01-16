@@ -1,7 +1,7 @@
 """
 title: Pyodide Code Execution
 author: EntropyYue
-author_url: https://github.com/EntropyYue/pyodide-code-execution
+author_url: https://github.com/EntropyYue
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
 version: 0.1.0
 """
