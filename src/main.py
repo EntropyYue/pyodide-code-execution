@@ -1,9 +1,9 @@
 """
 title: Pyodide Code Execution
 author: EntropyYue
-author_url: https://github.com/EntropyYue/pyodide-code-execution
+author_url: https://github.com/EntropyYue
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.1.0
+version: 0.1.1
 """
 
 import uuid
@@ -48,7 +48,10 @@ class Tools:
         :return: The output from the executed code, when `status` is not "OK", report the `status` field first.
         """
         if not __event_call__:
-            raise
+            return {
+                "error": "Event call not available. WebSocket connection required for pyodide execution."
+            }
+
         emitter = EventEmitter(self.valves, __event_emitter__)
         execution_tracker = CodeExecutionTracker(
             name="Python Code Execution", code=python_code, language="python"
@@ -70,7 +73,7 @@ class Tools:
         )
 
         if stdout := result.get("stdout"):
-            stdout_lines = stdout.splitlines(keepends=True)
+            stdout_lines = stdout.split("\n")
 
             for i, line in enumerate(stdout_lines):
                 if line.startswith("data:image/png;base64,") and (
@@ -85,15 +88,14 @@ class Tools:
                     stdout_lines[i] = f"![Output Image]({image_url})"
                     execution_tracker.add_file("Output Image", image_url)
 
-            stdout = "".join(stdout_lines)
-        execution_tracker.set_output(stdout or result.get("result") or "None")
-        if result.get("stderr"):
-            execution_tracker.set_error(result.get("stderr") or "Error")
+            result["stdout"] = "\n".join(stdout_lines)
+
+        execution_tracker.result = result
 
         await emitter.code_execution(execution_tracker)
 
         return {
-            "stdout": stdout,
+            "stdout": result.get("stdout"),
             "stderr": result.get("stderr"),
             "result": result.get("result"),
         }
@@ -113,11 +115,18 @@ class CodeExecutionTracker:
         self.language = language
         self._result: TrackerResult = {}
 
-    def set_error(self, error: str):
-        self._result["error"] = error
+    @property
+    def result(self) -> TrackerResult:
+        return self._result
 
-    def set_output(self, output: str):
-        self._result["output"] = output
+    @result.setter
+    def result(self, exec_result: Result) -> None:
+        self._result["output"] = (
+            exec_result.get("stdout") or exec_result.get("result") or "None"
+        )
+        if exec_result.get("stderr"):
+            self._result["output"] = ""
+            self._result["error"] = exec_result["stderr"] or "Error"
 
     def add_file(self, name: str, url: str):
         if "files" not in self._result:
@@ -137,8 +146,8 @@ class CodeExecutionTracker:
             "code": self.code,
             "language": self.language,
         }
-        if "output" in self._result or "error" in self._result:
-            data["result"] = self._result
+        if "output" in self.result or "error" in self.result:
+            data["result"] = self.result
         return data
 
 
