@@ -43,9 +43,9 @@ class Tools:
         Use Pyodide to execute the provided Python code and return the output.
         When using Matplotlib, use the show() function.
 
-        :param python_code: The Python code to execute.
+        :param python_code: The Python code to execute
 
-        :return: The output from the executed code, when `status` is not "OK", report the `status` field first.
+        :return: JSON with stdout, stderr, and result from execution
         """
         if not __event_call__:
             return {
