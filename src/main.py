@@ -131,7 +131,8 @@ class CodeExecutionTracker:
     def add_file(self, name: str, url: str) -> None:
         self._result.setdefault("files", []).append({"name": name, "url": url})
 
-    def citation_data(self) -> dict[str, str | TrackerResult]:
+    @property
+    def citation(self) -> dict[str, str | TrackerResult]:
         data: dict[str, str | TrackerResult] = {
             "type": "code_execution",
             "id": self._id,
@@ -163,7 +164,5 @@ class EventEmitter:
             }
         )
 
-    async def code_execution(
-        self, code_execution_tracker: CodeExecutionTracker
-    ) -> None:
-        await self._emit("citation", code_execution_tracker.citation_data())
+    async def code_execution(self, tracker: CodeExecutionTracker) -> None:
+        await self._emit("citation", tracker.citation)
