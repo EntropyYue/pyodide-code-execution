@@ -158,16 +158,15 @@ class EventEmitter:
         self.event_emitter = event_emitter
         self.valves = valves
 
-    async def _emit(self, typ: str, data: dict[str, Any]) -> Any:
+    async def _emit(self, typ: str, data: dict[str, Any]) -> None:
         if not self.event_emitter:
-            return None
-        result = await self.event_emitter(
+            return
+        await self.event_emitter(
             {
                 "type": typ,
                 "data": data,
             }
         )
-        return result
 
     async def code_execution(
         self, code_execution_tracker: CodeExecutionTracker
