@@ -128,10 +128,10 @@ class CodeExecutionTracker:
             self._result["output"] = ""
             self._result["error"] = exec_result["stderr"] or "Error"
 
-    def add_file(self, name: str, url: str):
+    def add_file(self, name: str, url: str) -> None:
         self._result.setdefault("files", []).append({"name": name, "url": url})
 
-    def citation_data(self):
+    def citation_data(self) -> dict[str, str | TrackerResult]:
         data: dict[str, str | TrackerResult] = {
             "type": "code_execution",
             "id": self._id,
