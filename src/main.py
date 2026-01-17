@@ -109,7 +109,7 @@ class TrackerResult(TypedDict, total=False):
 
 class CodeExecutionTracker:
     def __init__(self, name: str, code: str, language: str) -> None:
-        self._uuid = str(uuid.uuid4())
+        self._id = str(uuid.uuid4())
         self.name = name
         self.code = code
         self.language = language
@@ -139,7 +139,7 @@ class CodeExecutionTracker:
     def citation_data(self):
         data: dict[str, str | TrackerResult] = {
             "type": "code_execution",
-            "id": self._uuid,
+            "id": self._id,
             "name": self.name,
             "code": self.code,
             "language": self.language,
