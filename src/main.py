@@ -3,7 +3,7 @@ title: Pyodide Code Execution
 author: EntropyYue
 author_url: https://github.com/EntropyYue
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.1.1
+version: 0.1.2
 """
 
 import uuid
@@ -43,9 +43,9 @@ class Tools:
         Use Pyodide to execute the provided Python code and return the output.
         When using Matplotlib, use the show() function.
 
-        :param python_code: The Python code to execute.
+        :param python_code: The Python code to execute
 
-        :return: The output from the executed code, when `status` is not "OK", report the `status` field first.
+        :return: JSON with stdout, stderr, and result from execution
         """
         if not __event_call__:
             return {
@@ -109,7 +109,7 @@ class TrackerResult(TypedDict, total=False):
 
 class CodeExecutionTracker:
     def __init__(self, name: str, code: str, language: str) -> None:
-        self._uuid = str(uuid.uuid4())
+        self._id = str(uuid.uuid4())
         self.name = name
         self.code = code
         self.language = language
@@ -129,9 +129,7 @@ class CodeExecutionTracker:
             self._result["error"] = exec_result["stderr"] or "Error"
 
     def add_file(self, name: str, url: str):
-        if "files" not in self._result:
-            self._result["files"] = []
-        self._result["files"].append(
+        self._result.setdefault("files", []).append(
             {
                 "name": name,
                 "url": url,
@@ -141,13 +139,13 @@ class CodeExecutionTracker:
     def citation_data(self):
         data: dict[str, str | TrackerResult] = {
             "type": "code_execution",
-            "id": self._uuid,
+            "id": self._id,
             "name": self.name,
             "code": self.code,
             "language": self.language,
         }
-        if "output" in self.result or "error" in self.result:
-            data["result"] = self.result
+        if "output" in self._result or "error" in self._result:
+            data["result"] = self._result
         return data
 
 
@@ -160,16 +158,15 @@ class EventEmitter:
         self.event_emitter = event_emitter
         self.valves = valves
 
-    async def _emit(self, typ: str, data: dict[str, Any]) -> Any:
+    async def _emit(self, typ: str, data: dict[str, Any]) -> None:
         if not self.event_emitter:
-            return None
-        result = await self.event_emitter(
+            return
+        await self.event_emitter(
             {
                 "type": typ,
                 "data": data,
             }
         )
-        return result
 
     async def code_execution(
         self, code_execution_tracker: CodeExecutionTracker
