@@ -140,8 +140,8 @@ class CodeExecutionTracker:
             "code": self.code,
             "language": self.language,
         }
-        if "output" in self._result or "error" in self._result:
-            data["result"] = self._result
+        if "output" in self.result or "error" in self.result:
+            data["result"] = self.result
         return data
 
 
