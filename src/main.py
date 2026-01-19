@@ -165,4 +165,6 @@ class EventEmitter:
         )
 
     async def code_execution(self, tracker: CodeExecutionTracker) -> None:
+        if not self.valves.STATUS:
+            return
         await self._emit("citation", tracker.citation)
