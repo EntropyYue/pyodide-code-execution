@@ -25,6 +25,9 @@ class Result(TypedDict):
 
 class Tools:
     class Valves(BaseModel):
+        EXECUTION_TRACKING: bool = Field(
+            default=True, description="Enable execution tracking."
+        )
         STATUS: bool = Field(default=True, description="Enable status updates.")
 
     def __init__(self) -> None:
@@ -47,12 +50,17 @@ class Tools:
 
         :return: JSON with stdout, stderr, and result from execution
         """
+
+        emitter = EventEmitter(self.valves, __event_emitter__)
+
         if not __event_call__:
+            await emitter.status(
+                "Error: WebSocket connection required for pyodide execution.", done=True
+            )
             return {
                 "error": "Event call not available. WebSocket connection required for pyodide execution."
             }
 
-        emitter = EventEmitter(self.valves, __event_emitter__)
         execution_tracker = CodeExecutionTracker(
             name="Python Code Execution", code=python_code, language="python"
         )
@@ -160,6 +168,11 @@ class EventEmitter:
         await self.event_emitter({"type": typ, "data": data})
 
     async def code_execution(self, tracker: CodeExecutionTracker) -> None:
-        if not self.valves.STATUS:
+        if not self.valves.EXECUTION_TRACKING:
             return
         await self._emit("citation", tracker.citation)
+
+    async def status(self, description: str, done: bool = False) -> None:
+        if not self.valves.STATUS:
+            return
+        await self._emit("status", {"done": done, "description": description})
