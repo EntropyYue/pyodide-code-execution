@@ -3,7 +3,7 @@ title: Pyodide Code Execution
 author: EntropyYue
 author_url: https://github.com/EntropyYue
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.1.2
+version: 0.1.3
 """
 
 import uuid
@@ -128,15 +128,11 @@ class CodeExecutionTracker:
             self._result["output"] = ""
             self._result["error"] = exec_result["stderr"] or "Error"
 
-    def add_file(self, name: str, url: str):
-        self._result.setdefault("files", []).append(
-            {
-                "name": name,
-                "url": url,
-            }
-        )
+    def add_file(self, name: str, url: str) -> None:
+        self._result.setdefault("files", []).append({"name": name, "url": url})
 
-    def citation_data(self):
+    @property
+    def citation(self) -> dict[str, str | TrackerResult]:
         data: dict[str, str | TrackerResult] = {
             "type": "code_execution",
             "id": self._id,
@@ -168,7 +164,7 @@ class EventEmitter:
             }
         )
 
-    async def code_execution(
-        self, code_execution_tracker: CodeExecutionTracker
-    ) -> None:
-        await self._emit("citation", code_execution_tracker.citation_data())
+    async def code_execution(self, tracker: CodeExecutionTracker) -> None:
+        if not self.valves.STATUS:
+            return
+        await self._emit("citation", tracker.citation)
