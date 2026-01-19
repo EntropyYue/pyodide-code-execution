@@ -66,6 +66,7 @@ class Tools:
         )
 
         await emitter.code_execution(execution_tracker)
+        await emitter.status("Executing Python code")
 
         result: Result = await __event_call__(
             {
@@ -98,6 +99,7 @@ class Tools:
 
             result["stdout"] = "\n".join(stdout_lines)
 
+        await emitter.status("Code Execute Complete", done=True)
         execution_tracker.result = result
 
         await emitter.code_execution(execution_tracker)
