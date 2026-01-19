@@ -43,8 +43,7 @@ class Tools:
         __event_call__: Callable[[dict], Any] | None = None,
     ) -> dict[str, str | None]:
         """
-        Use Pyodide to execute the provided Python code and return the output.
-        When using Matplotlib, use the show() function.
+        A Python shell that runs directly in the user's browser, enabling fast execution of code for analysis, calculations, or problem-solving.
 
         :param python_code: The Python code to execute
 
