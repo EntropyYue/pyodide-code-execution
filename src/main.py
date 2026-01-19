@@ -50,7 +50,6 @@ class Tools:
 
         :return: JSON with stdout, stderr, and result from execution
         """
-
         emitter = EventEmitter(self.valves, __event_emitter__)
 
         if not __event_call__:
