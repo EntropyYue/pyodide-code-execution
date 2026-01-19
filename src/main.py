@@ -35,7 +35,7 @@ class Tools:
 
     async def run_python_code(
         self,
-        python_code: str,
+        code: str,
         __request__: Request,
         __user__: dict | None = None,
         __metadata__: dict | None = None,
@@ -45,7 +45,7 @@ class Tools:
         """
         A Python shell that runs directly in the user's browser, enabling fast execution of code for analysis, calculations, or problem-solving.
 
-        :param python_code: The Python code to execute
+        :param code: The Python code to execute
 
         :return: JSON with stdout, stderr, and result from execution
         """
@@ -60,7 +60,7 @@ class Tools:
             }
 
         execution_tracker = CodeExecutionTracker(
-            name="Python Code Execution", code=python_code, language="python"
+            name="Python Code Execution", code=code, language="python"
         )
 
         await emitter.code_execution(execution_tracker)
@@ -71,7 +71,7 @@ class Tools:
                 "type": "execute:python",
                 "data": {
                     "id": str(uuid.uuid4()),
-                    "code": python_code,
+                    "code": code,
                     "session_id": __metadata__.get("session_id")
                     if __metadata__
                     else None,
