@@ -131,12 +131,14 @@ class CodeExecutionTracker:
 
     @result.setter
     def result(self, exec_result: Result) -> None:
-        self._result["output"] = (
-            exec_result.get("stdout") or exec_result.get("result") or "None"
-        )
-        if exec_result.get("stderr"):
-            self._result["output"] = ""
-            self._result["error"] = exec_result["stderr"] or "Error"
+        if output := (exec_result.get("stdout") or exec_result.get("result")):
+            self._result["output"] = output
+        if error := exec_result.get("stderr"):
+            self._result["error"] = error
+            return
+
+        if not output:
+            self._result["output"] = "None"
 
     def add_file(self, name: str, url: str) -> None:
         self._result.setdefault("files", []).append({"name": name, "url": url})
