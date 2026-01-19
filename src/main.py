@@ -3,7 +3,7 @@ title: Pyodide Code Execution
 author: EntropyYue
 author_url: https://github.com/EntropyYue
 funding_url: https://github.com/EntropyYue/pyodide-code-execution
-version: 0.1.3
+version: 0.1.4
 """
 
 import uuid
@@ -25,6 +25,9 @@ class Result(TypedDict):
 
 class Tools:
     class Valves(BaseModel):
+        EXECUTION_TRACKING: bool = Field(
+            default=True, description="Enable execution tracking."
+        )
         STATUS: bool = Field(default=True, description="Enable status updates.")
 
     def __init__(self) -> None:
@@ -47,17 +50,23 @@ class Tools:
 
         :return: JSON with stdout, stderr, and result from execution
         """
+
+        emitter = EventEmitter(self.valves, __event_emitter__)
+
         if not __event_call__:
+            await emitter.status(
+                "Error: WebSocket connection required for pyodide execution.", done=True
+            )
             return {
                 "error": "Event call not available. WebSocket connection required for pyodide execution."
             }
 
-        emitter = EventEmitter(self.valves, __event_emitter__)
         execution_tracker = CodeExecutionTracker(
             name="Python Code Execution", code=python_code, language="python"
         )
 
         await emitter.code_execution(execution_tracker)
+        await emitter.status("Executing Python code")
 
         result: Result = await __event_call__(
             {
@@ -90,6 +99,7 @@ class Tools:
 
             result["stdout"] = "\n".join(stdout_lines)
 
+        await emitter.status("Code Execute Complete", done=True)
         execution_tracker.result = result
 
         await emitter.code_execution(execution_tracker)
@@ -121,12 +131,14 @@ class CodeExecutionTracker:
 
     @result.setter
     def result(self, exec_result: Result) -> None:
-        self._result["output"] = (
-            exec_result.get("stdout") or exec_result.get("result") or "None"
-        )
-        if exec_result.get("stderr"):
-            self._result["output"] = ""
-            self._result["error"] = exec_result["stderr"] or "Error"
+        if output := (exec_result.get("stdout") or exec_result.get("result")):
+            self._result["output"] = output
+        if error := exec_result.get("stderr"):
+            self._result["error"] = error
+            return
+
+        if not output:
+            self._result["output"] = "None"
 
     def add_file(self, name: str, url: str) -> None:
         self._result.setdefault("files", []).append({"name": name, "url": url})
@@ -140,8 +152,8 @@ class CodeExecutionTracker:
             "code": self.code,
             "language": self.language,
         }
-        if "output" in self._result or "error" in self._result:
-            data["result"] = self._result
+        if "output" in self.result or "error" in self.result:
+            data["result"] = self.result
         return data
 
 
@@ -157,14 +169,14 @@ class EventEmitter:
     async def _emit(self, typ: str, data: dict[str, Any]) -> None:
         if not self.event_emitter:
             return
-        await self.event_emitter(
-            {
-                "type": typ,
-                "data": data,
-            }
-        )
+        await self.event_emitter({"type": typ, "data": data})
 
     async def code_execution(self, tracker: CodeExecutionTracker) -> None:
-        if not self.valves.STATUS:
+        if not self.valves.EXECUTION_TRACKING:
             return
         await self._emit("citation", tracker.citation)
+
+    async def status(self, description: str, done: bool = False) -> None:
+        if not self.valves.STATUS:
+            return
+        await self._emit("status", {"done": done, "description": description})
