@@ -43,7 +43,8 @@ class Tools:
         __event_call__: Callable[[dict], Any] | None = None,
     ) -> dict[str, str | None]:
         """
-        A Python shell that runs directly in the user's browser, enabling fast execution of code for analysis, calculations, or problem-solving.
+        Python interpreter for executing Python code in a Pyodide environment.
+        That runs directly in the user's browser, enabling fast execution of code for analysis, calculations, or problem-solving.
 
         :param code: The Python code to execute
 
